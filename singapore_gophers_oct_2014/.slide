@@ -1,0 +1,227 @@
+More efficient Go tests
+
+Mark
+Software Engineer, Viki
+
+* outline
+
+- Atoms, bits and entropy
+- The built-in tests
+- The dried-up tests
+- Frameworks
+- Tools
+
+* 
+.image stress_test.png
+
+* Atoms, bits and entropy
+
+- Mass of Earth: 5.98 x 10^27 grams
+- Atoms on Earth: 1.33 x 10^50
+
+	#include <stdio.h>
+
+	main()
+	{
+	   int32_t a, b, c, d, e, f;
+	   a = 10;
+	   b = 12;
+	   c = 20;
+	   d = 50;
+	   e = 60;
+	   f = 70;
+	   printf("%d", a+b+c+d+e+f);
+	}
+
+Play around:
+
+	6 * 32  = 192
+	2 ^ 192 ~ 10 ^ 57
+
+* Atoms, bits and entropy
+
+2nd law of thermodynamisc: *entropy* *always* *increase*
+
+Also apply for software, so you have more variables => more states.
+
+The universe has around 10^82 atoms, ~ 2^260.
+
+- About 12 32-bit numbers
+- A string of 48 ASCII characters
+
+Now you know why bug never stop coming
+
+* Go's built-in test
+
+Unit test
+
+	 func TestFunction(t *testing.T) {
+	     sql.Exec(`INSERT INTO users (username, password) VALUES ('me', 'mypassword')`)
+	     user, err := user.FindByUsername(`me`)
+	     if err != nil {
+	         t.Errorf(`user with username=%v not found, err=%v`, `me`, err)
+	     }
+	 }
+
+Read more from
+
+.link http://golang.org/pkg/testing/ package 'testing'
+
+* Go's built-in test
+
+Integration (web service)
+
+	func TestEndPoint(t *testing.T) {
+		buffer := bytes.NewBuffer(nil)
+		buffer.Write(`{"name":"abc"`)
+		server.ServeHttp(':8080', nil)
+		resp, err := http.Post(`http://localhost:8080/v5/users.json`, `application/json`, &buffer)
+		if err != nil {
+			t.Fatalf(`this test has failed`)
+		}
+		// some further checking
+	}
+
+Read more from
+
+.link http://golang.org/pkg/net/http/httptest/ package 'net/http/testing'
+.link http://golang.org/pkg/net/http package 'net/http'
+
+* Dry it up
+
+Write tables for tests
+
+	var flagtests = []struct {
+		in  string
+		out string
+	}{
+		{"%a", "[%a]"},
+		{"%-a", "[%-a]"},
+		{"%0a", "[%0a]"},
+		{"%1.2a", "[%1.2a]"},
+		{"%-1.2a", "[%-1.2a]"},
+		{"%-+1.2a", "[%+-1.2a]"},
+		{"%-1.2abc", "[%-1.2a]bc"},
+	}
+	
+	func TestFlagParser(t *testing.T) {
+		var flagprinter flagPrinter
+		for _, tt := range flagtests {
+			s := Sprintf(tt.in, &flagprinter)
+			if s != tt.out {
+				t.Errorf("Sprintf(%q, &flagprinter) => %q, want %q", tt.in, s, tt.out)
+			}
+		}
+	}
+
+* Dry it up
+
+Random tests
+
+	func TestSecondsToUTCAndBack(t *testing.T) {
+		f := func(sec int64) bool { return Unix(sec, 0).UTC().Unix() == sec }
+		f32 := func(sec int32) bool { return f(int64(sec)) }
+		cfg := &quick.Config{MaxCount: 10000}
+		
+		// Try a reasonable date first, then the huge ones.
+		if err := quick.Check(f32, cfg); err != nil {
+			t.Fatal(err)
+		}
+		if err := quick.Check(f, cfg); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+Read more from
+
+.link http://golang.org/pkg/testing/quick package 'testing/quick'
+
+* Frameworks
+
+Gocheck
+
+	package hello_test
+	
+	import (
+	    "testing"
+	    "os"
+	    . "gopkg.in/check.v1"
+	)
+	
+	// Hook up gocheck into the "go test" runner.
+	func Test(t *testing.T) { TestingT(t) }
+	
+	type MySuite struct{}
+	func init() {
+		Suite(&MySuite{})
+	}
+	
+	func (s *MySuite) TestHelloWorld(c *C) {
+	    c.Assert(42, Equals, "42")
+	    c.Assert(os.Errno(13), Matches, "perm.*accepted")
+	    c.Check(42, Equals, 42)
+	}
+
+* Frameworks
+
+Ginkgo & Gomega
+
+	var _ = Describe("Book", func() {
+	    var (
+	        longBook  Book
+	    )
+	
+	    BeforeEach(func() {
+	        longBook = Book{
+	            Title:  "Les Miserables",
+	            Author: "Victor Hugo",
+	            Pages:  1488,
+	        }
+	    })
+	
+	    Describe("Categorizing book length", func() {
+	        Context("With more than 300 pages", func() {
+	            It("should be a novel", func() {
+	                Expect(longBook.CategoryByLength()).To(Equal("NOVEL"))
+	            })
+	        })
+	    })
+	})
+
+* Some other ideas
+
+You assume, we break
+
+Network fails, IO fail, your machine fail, etc...
+
+testing/iotest
+
+	func DataErrReader(r io.Reader) io.Reader
+	func HalfReader(r io.Reader) io.Reader
+	func NewReadLogger(prefix string, r io.Reader) io.Reader
+	func NewWriteLogger(prefix string, w io.Writer) io.Writer
+	func OneByteReader(r io.Reader) io.Reader
+	func TimeoutReader(r io.Reader) io.Reader
+	func TruncateWriter(w io.Writer, n int64) io.Writer
+
+* Test coverage
+
+go test --cover
+go test --race
+go test --coverfile && go tool cover
+
+* 
+
+.image test_management.png
+
+* Extra resources
+
+.link http://talks.golang.org/2014/testing.slide Testing techniques (Andrew Gerrand)
+
+.link https://www.youtube.com/watch?v=lKXe3HUG2l4 The Mess We're In (Joe Amstrong)
+
+.link https://www.youtube.com/watch?v=4fFDFbi3toc Testing Distributed Systems w/ Deterministic Simulation (Will Wilson)
+
+Image credits
+
+.link www.geek-and-poke.com geek&poke
