@@ -96,10 +96,8 @@ Write tables for tests
 		out string
 	}{
 		{"%a", "[%a]"},
-		{"%-a", "[%-a]"},
 		{"%0a", "[%0a]"},
 		{"%1.2a", "[%1.2a]"},
-		{"%-1.2a", "[%-1.2a]"},
 		{"%-+1.2a", "[%+-1.2a]"},
 		{"%-1.2abc", "[%-1.2a]bc"},
 	}
@@ -115,6 +113,32 @@ Write tables for tests
 	}
 
 * Dry it up
+
+	var yearDayTests = []YearDayTest{
+		{2007, 1, 1, 1},
+		{2007, 1, 15, 15},
+		// ...
+	}
+	var yearDayLocations = []*Location{
+		FixedZone("UTC-8", -8*60*60),
+		FixedZone("UTC-4", -4*60*60),
+		// ...
+	}
+	
+	func TestYearDay(t *testing.T) {
+		for _, loc := range yearDayLocations {
+			for _, ydt := range yearDayTests {
+				dt := Date(ydt.year, Month(ydt.month), ydt.day, 0, 0, 0, 0, loc)
+				yday := dt.YearDay()
+				if yday != ydt.yday {
+					t.Errorf("got %d, expected %d for %d-%02d-%02d in %v",
+						yday, ydt.yday, ydt.year, ydt.month, ydt.day, loc)
+				}
+			}
+		}
+	}
+
+* Being lazy 
 
 Random tests
 
@@ -204,11 +228,11 @@ testing/iotest
 	func TimeoutReader(r io.Reader) io.Reader
 	func TruncateWriter(w io.Writer, n int64) io.Writer
 
-* Test coverage
+* Tools
 
-go test --cover
-go test --race
-go test --coverfile && go tool cover
+- go test --cover
+- go test --coverfile && go tool cover
+- go test --race
 
 * 
 
