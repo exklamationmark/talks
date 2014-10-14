@@ -1,0 +1,158 @@
+Concurrency in Golang
+Tags: golang, concurrency, viki
+
+Mark
+Software Engineer, Viki
+
+* main()
+
+Today's agenda
+
+- Get introduced to Go's concurrency
+- See how it's applied in Viki context
+
+* import `terms`
+
+Parallelism
+
+  Simultaneous *execution* of (possibly related computation) (i.e: on 2 different proecssor)
+
+Concurrency
+
+  Composition of independently executing processes
+
+
+
+* an analogy
+
+* gophers and books
+
+
+moving books to the incinerator
+
+  image from http://talks.golang.org/2012/concurrency.slide
+
+.image support/sg_gophers_03/move_books_problem.png
+
+* speed things up
+
+.image support/sg_gophers_03/move_books_problem_add_gopher.png
+
+
+* speed things up (cont.)
+
+.image support/sg_gophers_03/move_books_problem_add_cart.png
+
+* speed things up (cont.)
+
+.image support/sg_gophers_03/move_books_problem_parallel.png
+
+What we ususally imagine _parallel_ to be
+
+* a different design
+
+.image support/sg_gophers_03/move_books_2_concurrent_design.png
+
+* a different design (cont.)
+
+.image support/sg_gophers_03/move_books_2_parallel.png
+
+* another design
+
+.image support/sg_gophers_03/move_books_3_concurrent_design.png
+
+* another design (cont.)
+
+.image support/sg_gophers_03/move_books_3_parallel.png
+
+* Concurrency vs Parallelism
+
+(true) Parallelism is about running many things at the same time
+
+Concurrency is about breaking down things into independent steps
+The steps are independent, and can run in parallel
+
+Another analogy
+
+- 2 threads running on a single CPU
+- 2 threads running on different CPUs
+
+* Goroutines
+
+* Goroutines (cont.)
+
+.play support/sg_gophers_03/boring.go /START OMIT/,/END OMIT/
+
+.play support/sg_gophers_03/many_boring.go /START OMIT/,/END OMIT/
+
+* Channels
+
+* Channels (cont.)
+
+  Let's wait for 2 books & burn them
+
+.play support/sg_gophers_03/channel.go /START OMIT/,/END OMIT/
+
+* Select 
+
+* Select
+
+.code support/sg_gophers_03/select.go /START OMIT/,/END OMIT/
+
+* In Viki context
+
+* Precomputing data
+
+.image support/sg_gophers_03/holdbacks_computation.png
+
+* Previously
+
+done as ruby script, takes around 45 minutes & a lot of memory
+need to transform the entire set of rules all the time
+
+*Problem*
+
+- Slow
+- Ineffective CPU Utilization
+
+* Redesign
+
+.image support/sg_gophers_03/holdbacks_redesigned.png
+
+* Why Go?
+
+There are other options: multiple Ruby workers, Node.js workers
+
+However, Go gives good performance while maintaining high-level structure
+
+* Hence
+
+.code support/sg_gophers_03/holdbacks_transformer.go /START OMIT/,/END OMIT/
+
+* Generator
+
+.code support/sg_gophers_03/holdbacks_generator.go /START OMIT/,/END OMIT/
+
+* Worker
+
+.code support/sg_gophers_03/holdbacks_merge.go /START OMIT/,/END OMIT/
+
+* Merge (a concurrency pattern)
+
+.code support/sg_gophers_03/holdbacks_worker.go /START OMIT/,/END OMIT/
+
+* Pros and Cons
+
+*Pros*
+
+- Easy to write, (almost) no problem with concurrency
+- Easy to scale when needed
+- Built-in race condition detection (`go race`)
+
+*Cons*
+
+- More code :)
+
+
+
+* We are hiring: viki.com/jobs
