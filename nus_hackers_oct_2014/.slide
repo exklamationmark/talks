@@ -1,0 +1,222 @@
+In Murphy, we trust
+
+Mark
+Software Engineer, Viki
+
+* outline
+
+- Bits & Murphy
+- What is Viki, and what we do there ?
+- Assumption No.1: Computation is fast
+- Assumption No.2: Transport cost is zero
+- Assumption No.3: Things just works
+- Conclusion
+
+* Bits and Murphy
+
+* 
+
+.image img_murphy_law.png
+
+* Really?
+
+.image img_laws.png
+
+* Viki
+
+* 
+
+.iframe http:///www.youtube.com/embed/wVH--bLiVZ8 600 980
+
+* What we do there
+
+* 
+
+Essentially, ensuring this happen
+
+	$> curl -X GET 'http://api.viki.io/v4/videos/1032054v.json'
+  
+	{
+		id: "1032054v",
+		created_at: "2014-02-14T08:51:02Z",
+		updated_at: "2014-04-28T06:18:25Z",
+		titles: {
+			en: "TWO WEEKS"
+		},
+		container: {
+			id: "22451c",
+			type: "series",
+			titles: {
+				en: "The Office Season 5"
+			},
+			...
+		}
+		...
+	}
+
+* Challenges
+
+* 
+
+- ~2-3M active users, 1000 request/s (60k/min)
+- many moving components (~30 services) working together
+- Murphy makes sure everything and anything fails
+
+* How often does something crash?
+
+* 
+
+- Your app fails once every half a year (180 day)
+- With 28 apps, how often is a failure  ?
+
+around 2 day. Optimistically
+
+.image img_sky_diving.gif
+
+* 
+
+.image img_life_gets_harder.jpg
+
+* The scaling story
+
+* 
+
+A typical web app:
+
+.image img_typical_web_stack.png
+
+* 
+
+.image img_homer_disperato.jpg
+
+* Symptoms
+
+- I love the service, but your site are just way tooooo slooow...
+- Dude! All API call are taking 5-6s to return. Why!
+- All-time high 499, 400, 500, ... Is the sky falling?
+
+* Your operations are not fast
+
+* Printf
+
+	I 2014-03-04T13:19:30Z 4.73s SELECT * FROM videos WHERE japanese_subtitle >= 50
+	I 2014-03-04T13:20:30Z 5.23s /v5/videos.json?japanese_completion=50
+	I 2014-03-04T13:20:30Z 2.51s /v5/videos/123v.json
+
+- Operations within the app takes too long
+- Most likely: querying takes too long
+
+* 
+
+	# SELECT * FROM videos WHERE japanese_completion >= 50;
+	# EXPLAIN SELECT * FROM videos WHERE japanese_completion >= 50;
+	                       QUERY PLAN                        
+	----------------------------------------------------------
+	 Seq Scan on users  (cost=0.00...105314.30 rows=28016 width=590)
+	   Filter: (japanese_completion >= 50)
+	(28016 rows)
+
+- Scan on 100k rows? Even O(n) is bad here
+
+	# CREATE INDEX ON videos (japanese_completion);
+	# EXPLAIN SELECT * FROM videos WHERE japanese_completion >= 50;
+	                                   QUERY PLAN                                   
+	--------------------------------------------------------------------------------
+	 Index Scan using videos_japanese_complention_idx on videos  (cost=0.00..232.26 rows=28016 width=531)
+	   Index Cond: (japanese_completion >= 50)
+
+- Now that's *500* times faster
+- There's a catch though, your `Insert`, `Update` is now slower
+
+* 
+
+Other subtitle querying problems
+
+	CREATE INDEX ON user_favorites (user_id, video_id);
+	SELECT * FROM user_favorites WHERE video_id =  '1234v'; // slow
+
+- Improper use of indexes
+
+	SELECT * FROM videos WHERE container_id = '50c';        //23519v, 82923v, 32927v, ...
+	SELECT * FROM videos WHERE subscription_id = '23519v';
+	SELECT * FROM videos WHERE subscription_id = '82923v';
+	SELECT * FROM videos WHERE subscription_id = '32927v';
+
+- 1 + N query problem
+
+* Transport cost is not zero
+
+* 
+
+Still slow :D
+
+	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
+	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
+	SELECT * FROM user_devices WHERE user_id = '123u';
+	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
+	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
+	SELECT * FROM user_devices WHERE user_id = '123u';
+	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
+	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
+	SELECT * FROM user_devices WHERE user_id = '123u';
+	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
+	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
+	SELECT * FROM user_devices WHERE user_id = '123u';
+	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
+	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
+	SELECT * FROM user_devices WHERE user_id = '123u';
+
+- Random access pattern
+- Query takes 100-200ms, but app wait 600-700ms for query
+- Too many queries, DB load goes up and beyond
+
+* What is the usage for Viki
+
+- Read heavy, little write
+- Data can fit into DB
+- 20kB per any item (that's around no of words on 10 A4 pages, 12pt)
+- 250k -> 500k videos: (20 * 500000)/(1024*1024) ~ 10GB
+- Put these into Redis, and query from there
+
+* 
+
+diagram
+
+* Results
+
+- 100ms => 15ms (x10)
+- good decrease in machine load (though higher memory)
+
+* Nothing runs forever
+
+* 
+
+Murphy ensures things happen when they shouldn't
+
+- OS crash
+- Hard-disk failure
+- Data-center outage (cable cut)
+- Someone with free time "trying the API"
+
+* 
+
+The cat has nine-lives. So our API has many clusteres
+
+* 
+
+Diagram
+
+* Results
+- When there is outage, we can auto-swap traffic to other places
+- Failure is contained
+
+* Sums up
+
+* 
+
+- When things scale, look at them in a differently
+- [[http://en.wikipedia.org/wiki/Fallacies_of_distributed_computing][Never assume]]
+- Understand Datastructure and algorigthms, OS, Network
+- A.B.C (Always be coding)
+
+* engineering.viki.com/internship
