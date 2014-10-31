@@ -28,7 +28,7 @@ Software Engineer, Viki
 
 .iframe http:///www.youtube.com/embed/wVH--bLiVZ8 600 980
 
-* What we do there
+* the Platform
 
 * 
 
@@ -58,7 +58,7 @@ Essentially, ensuring this happen
 
 * 
 
-- ~2-3M active users, 1000 request/s (60k/min)
+- 7M+ users, 2-3M active, 1000 request/s (60k/min)
 - many moving components (~30 services) working together
 - Murphy makes sure everything and anything fails
 
@@ -66,10 +66,10 @@ Essentially, ensuring this happen
 
 * 
 
-- Your app fails once every half a year (180 day)
+- Assume your app fails once every half a year (180 day)
 - With 28 apps, how often is a failure  ?
 
-around 2 day. Optimistically
+Once every 2 day. Optimistically
 
 .image img_sky_diving.gif
 
@@ -95,13 +95,22 @@ A typical web app:
 - Dude! All API call are taking 5-6s to return. Why!
 - All-time high 499, 400, 500, ... Is the sky falling?
 
-* Your operations are not fast
+* Computation does not happend in zero time
 
 * Printf
 
-	I 2014-03-04T13:19:30Z 4.73s SELECT * FROM videos WHERE japanese_subtitle >= 50
-	I 2014-03-04T13:20:30Z 5.23s /v5/videos.json?japanese_completion=50
-	I 2014-03-04T13:20:30Z 2.51s /v5/videos/123v.json
+	I 2014-03-04T13:19:30Z 109ms SELECT * FROM videos WHERE id = '123v'
+	I 2014-03-04T13:20:30Z 121ms /v5/videos/123v.json
+	I 2014-03-04T13:19:30Z 106ms SELECT * FROM containers WHERE id = '50c'
+	I 2014-03-04T13:20:30Z 145ms /v5/container/50c.json
+	I 2014-03-04T13:19:30Z 96ms SELECT * FROM containers WHERE id = '2919c'
+	I 2014-03-04T13:20:30Z 119ms /v5/container/2919c.json
+	I 2014-03-04T13:19:30Z 2.73s SELECT * FROM videos WHERE japanese_subtitle >= 50
+	I 2014-03-04T13:20:30Z 3.23s /v5/videos.json?japanese_completion=50
+	I 2014-03-04T13:19:30Z 132ms SELECT * FROM videos WHERE id = '943012v'
+	I 2014-03-04T13:20:30Z 174mss /v5/videos/943012v.json
+	I 2014-03-04T13:19:30Z 103ms SELECT * FROM videos WHERE id = '482415v'
+	I 2014-03-04T13:20:30Z 158ms /v5/videos/482415v.json
 
 - Operations within the app takes too long
 - Most likely: querying takes too long
@@ -112,11 +121,13 @@ A typical web app:
 	# EXPLAIN SELECT * FROM videos WHERE japanese_completion >= 50;
 	                       QUERY PLAN                        
 	----------------------------------------------------------
-	 Seq Scan on users  (cost=0.00...105314.30 rows=28016 width=590)
+	 Seq Scan on videos (cost=0.00...105314.30 rows=28016 width=590)
 	   Filter: (japanese_completion >= 50)
 	(28016 rows)
 
 - Scan on 100k rows? Even O(n) is bad here
+
+* 
 
 	# CREATE INDEX ON videos (japanese_completion);
 	# EXPLAIN SELECT * FROM videos WHERE japanese_completion >= 50;
@@ -128,64 +139,61 @@ A typical web app:
 - Now that's *500* times faster
 - There's a catch though, your `Insert`, `Update` is now slower
 
-* 
-
-Other subtitle querying problems
-
-	CREATE INDEX ON user_favorites (user_id, video_id);
-	SELECT * FROM user_favorites WHERE video_id =  '1234v'; // slow
-
-- Improper use of indexes
-
-	SELECT * FROM videos WHERE container_id = '50c';        //23519v, 82923v, 32927v, ...
-	SELECT * FROM videos WHERE subscription_id = '23519v';
-	SELECT * FROM videos WHERE subscription_id = '82923v';
-	SELECT * FROM videos WHERE subscription_id = '32927v';
-
-- 1 + N query problem
-
 * Transport cost is not zero
 
-* 
+* 1 + N
 
-Still slow :D
+	SELECT * FROM videos WHERE container_id = '50c';        //23519v, 82923v, 32927v, ...
+	SELECT * FROM videos WHERE id = '23519v';
+	SELECT * FROM videos WHERE id = '82923v';
+	SELECT * FROM videos WHERE id = '32927v';
+ 
+	videos = Video.Where(container_id: id)
+	for v in videos do
+		...
+	end
 
-	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
-	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
-	SELECT * FROM user_devices WHERE user_id = '123u';
-	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
-	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
-	SELECT * FROM user_devices WHERE user_id = '123u';
-	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
-	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
-	SELECT * FROM user_devices WHERE user_id = '123u';
-	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
-	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
-	SELECT * FROM user_devices WHERE user_id = '123u';
-	SELECT * FROM users WHERE hashed_password = 's@mEhashedPassw0rd!' AND username = 'somename';
-	SELECT * FROM subscriptions INNER JOIN users WHERE subscriptions.user_id = users.id;
-	SELECT * FROM user_devices WHERE user_id = '123u';
+.image img_real_query_cost.png
 
-- Random access pattern
-- Query takes 100-200ms, but app wait 600-700ms for query
-- Too many queries, DB load goes up and beyond
+* Again, computing things are not fast
 
-* What is the usage for Viki
+* More complicated requests are still slow
+
+	videos = Video.joins(:list_items).where('list_items.list_id' => '1l')
+	to_render = holdbacks_filter(videos)
+	sort_by_popularity(to_render)
+
+	def holdbacks_filter(videos)
+		# rules = Holdbacks where(:country => current_country, valid_from <= now, valid_until >= now)
+		# rules.sort by priority
+		# for video in videos do
+		# 	for rule in rules do
+		#			results << if valid(video, rule)
+		# 	end
+		# end
+		return results
+	end
+
+- 2-3 such request per page load
+- Querying from DB gives bad performance
+
+* Data access pattern
 
 - Read heavy, little write
-- Data can fit into DB
-- 20kB per any item (that's around no of words on 10 A4 pages, 12pt)
+- 20kB per any row (that's around no of words on 10 A4 pages, 12pt)
 - 250k -> 500k videos: (20 * 500000)/(1024*1024) ~ 10GB
+- That can feed into memory
 - Put these into Redis, and query from there
 
-* 
+* A fast data store for read
 
-diagram
+.image img_fast_query_redis.png
+
 
 * Results
 
 - 100ms => 15ms (x10)
-- good decrease in machine load (though higher memory)
+- DB load goes way down
 
 * Nothing runs forever
 
@@ -198,13 +206,17 @@ Murphy ensures things happen when they shouldn't
 - Data-center outage (cable cut)
 - Someone with free time "trying the API"
 
-* 
+* The cat has nine-lives. So is our services
 
-The cat has nine-lives. So our API has many clusteres
+.image img_cluster.png
 
-* 
+* Inside a cluster
 
-Diagram
+.image img_inside_cluster.png
+
+* What's actually there
+
+.image img_actual_clusters.png
 
 * Results
 - When there is outage, we can auto-swap traffic to other places
@@ -217,6 +229,6 @@ Diagram
 - When things scale, look at them in a differently
 - [[http://en.wikipedia.org/wiki/Fallacies_of_distributed_computing][Never assume]]
 - Understand Datastructure and algorigthms, OS, Network
-- A.B.C (Always be coding)
+- ABC (Always be coding)
 
 * engineering.viki.com/internship
