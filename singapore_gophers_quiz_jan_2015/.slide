@@ -22,4 +22,144 @@ One line to make them all correct
 
 * ta-dah
 
+* Easy-to-guess
 
+  package main
+  
+  import "fmt"
+  
+  func f(a, b int) {
+  	var min = (map[bool]int{true: b, false: a})[a > b]
+  	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+  }
+  
+  func main() {
+  	f(9000, 314)
+  }
+
+* Mathematically-correct
+
+  package main
+  
+  import "fmt"
+  
+  func f(a, b int) {
+  	var min = b % (a - b)
+  	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+  }
+  
+  func main() {
+  	f(43, 143)
+  }
+
+* very-short
+
+package main
+
+import "fmt"
+
+func f(a int, b uint) {
+	var min = 0
+	min = (a + int(b) - ((a-int(b))>>31 ^ (a - int(b))) - (a-int(b))>>31) / 2
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+func main() {
+	f(9000, 314)
+}
+
+* logically-sound
+
+package main
+ 
+import "fmt"
+ 
+func main() {
+	var a, b = 9000, 314
+	var min = 0
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+	fmt.Printf("\033[AThe min of %d and %d isn't %d\n", a, b, min)
+}
+
+* power-overwhelming
+
+package main
+
+import "fmt"
+
+func f(a, b int) {
+	var min = 0
+	min = b
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+func main() {
+	f(9000, 314)
+}
+
+* sleep sort
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func f(a, b int) {
+	var min = 0
+	c := make(chan int)
+	go func() {
+		time.Sleep(time.Duration(a))
+		c <- a
+	}()
+	go func(){
+		time.Sleep(time.Duration(b))
+		c <- b
+	}()
+	min = <-c
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+func main() {
+	f(9000, 314)
+}
+
+* the one
+
+func f(a int, b uint) {
+        var min = 0
+        min = copy(make([]struct{}, a), make([]struct{}, b))
+        fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+* fanstastically artistic
+
+package main
+
+import "fmt"
+
+func f(a int, b int) {
+	var min = 0
+	fmt.Sscanf(fmt.Sprintf("%d %t %d", a, a > b, b), "%d true %d", &min, &min)
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+func main() {
+	f(9000, 314)
+}
+
+* creative
+package main
+
+import "fmt"
+
+func f(a int, b int) {
+	var min = 0
+	min = len(fmt.Sprintf("%.[1]*s", a, fmt.Sprintf("%[1]*s", b, "_")))
+
+	fmt.Printf("The min of %d and %d is %d\n", a, b, min)
+}
+
+func main() {
+	f(9000, 3314)
+}
