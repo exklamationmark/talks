@@ -6,3 +6,7 @@ go build -gcflags=-m
 
 ## Send lots of request
 wrk -t20 -c400 -d30s 'http://localhost:9090'
+
+## memory usage
+go tool pprof 'http://localhost:9090/debug/pprof/heap'
+web
