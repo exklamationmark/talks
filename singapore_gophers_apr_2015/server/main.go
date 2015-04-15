@@ -34,5 +34,6 @@ func handler(resp http.ResponseWriter, req *http.Request) {
 }
 
 func NewGopher() *Gopher {
-	return &Gopher{time.Now().Unix()}
+	gopher := Gopher{time.Now().Unix()}
+  return &gopher
 }

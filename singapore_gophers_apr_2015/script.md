@@ -4,9 +4,9 @@ Hi everyone, my name is Mark and I am working at Viki.
 
 Today, I am going to talk about the Go garbage collector. This is also a lightning talk, so it's gonna be short!
  
-Go is a new (ah maybe not so new anymore), but it's getting a larger developer base. One of the attrative points of Go is that it is a garbage collected language. Everyone knows that it's garbage collecting unused memory, but do you know exactly why you need it and how it works, as well as how it might affect you?
+One of the attrative points of Go is its garbage collector. Everyone knows that it's garbage collecting unused memory, but do you know exactly why you need it and how it works, as well as how it might affect you?
 
-This talk would help you know about it.
+This talk is an introduction to what you need to know about the GC.
 
 First, I will go briefly to memory allocation in C, because it is the reason why garbage collector was invented in the first place. Then we will see how Go do it memory allocation. This will help you understand why you need the garbage collector.
 
