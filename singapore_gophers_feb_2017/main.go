@@ -87,7 +87,7 @@ func main() {
 }
 
 func doWork(id int, db *sql.DB) {
-	log.Printf("[%d][%4d] doWork(id= %4d)\n",
+	log.Printf("[%d][%4d] Started doWork(id= %4d)\n",
 		time.Now().UnixNano(),
 		id,
 		id,
