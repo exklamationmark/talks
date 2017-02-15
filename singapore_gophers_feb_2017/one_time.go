@@ -15,7 +15,7 @@ func oneTime(db *sql.DB) {
 		limit = int(float64(*maxOpen) * (*multiplier))
 	} else {
 		log.Printf("[%d] No connection limit. Send constant load\n", time.Now().UTC().UnixNano())
-		limit = 2000
+		limit = *ceil
 	}
 
 	for i := 0; i < limit; i++ {

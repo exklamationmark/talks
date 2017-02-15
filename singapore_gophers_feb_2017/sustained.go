@@ -12,7 +12,7 @@ func sustained(db *sql.DB) {
 		limit = int(float64(*maxOpen) * (*multiplier))
 	} else {
 		log.Printf("[%d] No connection limit. Set base concurrency= 100 goroutines\n", time.Now().UTC().UnixNano())
-		limit = 100
+		limit = *ceil
 	}
 
 	end := make(chan struct{})

@@ -27,6 +27,7 @@ var (
 	workload   *string
 	maxOpen    *int
 	maxIdle    *int
+	ceil       *int
 	interval   *time.Duration
 	duration   *time.Duration
 	multiplier *float64
@@ -39,6 +40,7 @@ func main() {
 	interval = flag.Duration("interval", time.Millisecond*100, "interval between calls")
 	duration = flag.Duration("duration", time.Second*5, "sustained duration")
 	multiplier = flag.Float64("multiplier", 1.0, "concurrency multiplier (w.r.t max-open)")
+	ceil = flag.Int("ceil", 1000, "default ceil value")
 	flag.Parse()
 
 	log.Printf("workload= %#v; maxOpen= %#v; maxIdle= %#v; interval= %#v; duration= %#v; multiplier= %#v\n",
@@ -87,19 +89,19 @@ func main() {
 }
 
 func doWork(id int, db *sql.DB) {
-	log.Printf("[%d][%4d] Started doWork(id= %4d)\n",
+	log.Printf("[%d][%8d] Started doWork(id= %8d)\n",
 		time.Now().UnixNano(),
 		id,
 		id,
 	)
 	if _, err := db.Exec(
-		fmt.Sprintf("INSERT INTO test (timestamp, id) VALUES (%d, '%4d')",
+		fmt.Sprintf("INSERT INTO test (timestamp, id) VALUES (%d, '%8d')",
 			time.Now().UTC().UnixNano(),
 			id,
 		),
 	); err != nil {
 		now := time.Now().UnixNano()
-		log.Printf("[%d][%4d] error inserting entry (%d, '%4d'); err= %v\n",
+		log.Printf("[%d][%8d] error inserting entry (%d, '%8d'); err= %v\n",
 			now,
 			id,
 			now,
@@ -110,7 +112,7 @@ func doWork(id int, db *sql.DB) {
 	}
 
 	now := time.Now().UnixNano()
-	log.Printf("[%d][%4d] Finished doWork()\n",
+	log.Printf("[%d][%8d] Finished doWork()\n",
 		now,
 		id,
 	)
