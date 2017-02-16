@@ -78,7 +78,7 @@ func main() {
 	go func() {
 		for {
 			log.Printf("[%d] db.Stats()= %#v\n", time.Now().UTC().UnixNano(), db.Stats())
-			time.Sleep(time.Millisecond * 50)
+			time.Sleep(*interval)
 		}
 	}()
 
@@ -101,7 +101,7 @@ func doWork(id int, db *sql.DB) {
 		),
 	); err != nil {
 		now := time.Now().UnixNano()
-		log.Printf("[%d][%8d] error inserting entry (%d, '%8d'); err= %v\n",
+		log.Printf("[%d][%8d] Error inserting (%d, '%8d'); err= %v\n",
 			now,
 			id,
 			now,
