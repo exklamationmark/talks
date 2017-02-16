@@ -1,0 +1,17 @@
+{
+	"ImportPath": "talks/singapore_gophers_feb_2017/customtypes",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-143-g67c3f2a",
+			"Rev": "67c3f2a8884c9b1aac5503c8d42ae4f73a93511c"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-143-g67c3f2a",
+			"Rev": "67c3f2a8884c9b1aac5503c8d42ae4f73a93511c"
+		}
+	]
+}
