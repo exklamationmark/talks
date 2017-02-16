@@ -18,3 +18,8 @@ run:
 		./chart --width=$(WIDTH) --height=$(HEIGHT) --input=../logs/$$file --output=../logs/$$file.res.$(RESOLUTION).svg --resolution=$(RESOLUTION); \
   done
 
+sample: build
+	@for file in `ls ../logs/ | grep -v '.svg'`; do \
+		./chart --width=$(WIDTH) --height=$(HEIGHT) --input=../logs/$$file --output=../logs/$$file.res.100ms.svg --resolution=100ms; \
+		./chart --width=$(WIDTH) --height=$(HEIGHT) --input=../logs/$$file --output=../logs/$$file.res.500ms.svg --resolution=500ms; \
+  done

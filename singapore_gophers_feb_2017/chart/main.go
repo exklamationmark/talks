@@ -43,7 +43,9 @@ func main() {
 		EventDoWork,
 		EventPQOpen,
 		EventFinished,
-		EventAppendFreeConn)
+		EventAppendFreeConn,
+		EventErrorInsert,
+	)
 	if err != nil {
 		log.Printf("cannot extract time series data; err= %v\n", err)
 		return

@@ -14,6 +14,7 @@ var (
 		EventFinished:       chart.ColorOrange.WithAlpha(255),
 		EventPQOpen:         chart.ColorRed.WithAlpha(255),
 		EventAppendFreeConn: chart.ColorGreen.WithAlpha(255),
+		EventErrorInsert:    chart.ColorBlack.WithAlpha(255),
 	}
 )
 

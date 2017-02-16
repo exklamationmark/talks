@@ -18,6 +18,7 @@ const (
 	EventPQOpen
 	EventFinished
 	EventAppendFreeConn
+	EventErrorInsert
 )
 
 var (
@@ -26,6 +27,7 @@ var (
 		EventPQOpen:         regexp.MustCompile(`\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[(\d+)\] pq\.Open\(`),
 		EventFinished:       regexp.MustCompile(`\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[(\d+)\]\[ *\d+\] Finished doWork\(`),
 		EventAppendFreeConn: regexp.MustCompile(`\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[(\d+)\] putConnDBLocked\.append\(db\.freeConn\)`),
+		EventErrorInsert:    regexp.MustCompile(`\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[(\d+)\]\[ *\d+\] Error inserting \(`),
 	}
 )
 
@@ -66,6 +68,10 @@ func extractTimeSeries(r io.Reader, events ...EventType) (map[EventType][]uint64
 func normalize(orig map[EventType][]uint64) (_ map[EventType][]uint64, min, max uint64) {
 	min = math.MaxUint64
 	for _, vals := range orig {
+		if len(vals) < 1 {
+			continue
+		}
+
 		if vals[0] < min {
 			min = vals[0]
 		}

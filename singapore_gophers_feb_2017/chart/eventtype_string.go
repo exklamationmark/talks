@@ -4,9 +4,9 @@ package main
 
 import "fmt"
 
-const _EventType_name = "e.DoWorke.PQOpene.Finishede.AppendFreeConn"
+const _EventType_name = "e.DoWorke.PQOpene.Finishede.AppendFreeConne.ErrorInsert"
 
-var _EventType_index = [...]uint8{0, 8, 16, 26, 42}
+var _EventType_index = [...]uint8{0, 8, 16, 26, 42, 55}
 
 func (i EventType) String() string {
 	if i < 0 || i >= EventType(len(_EventType_index)-1) {
