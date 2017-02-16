@@ -778,6 +778,7 @@ func (db *DB) connectionCleaner(d time.Duration) {
 		for i := 0; i < len(db.freeConn); i++ {
 			c := db.freeConn[i]
 			if c.createdAt.Before(expiredSince) {
+				log.Printf("[%d] connectionCleaner.mark_closing()\n", time.Now().UnixNano())
 				closing = append(closing, c)
 				last := len(db.freeConn) - 1
 				db.freeConn[i] = db.freeConn[last]
@@ -997,6 +998,7 @@ var putConnHook func(*DB, *driverConn)
 // be closed whenever possible (when c is next not in use), unless c is
 // already closed.
 func (db *DB) noteUnusedDriverStatement(c *driverConn, ds *driverStmt) {
+	log.Printf("[%d] noteUnusedDriverStatement()\n", time.Now().UnixNano())
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	if c.inUse {
@@ -1020,6 +1022,7 @@ const debugGetPut = false
 // putConn adds a connection to the db's free pool.
 // err is optionally the last error that occurred on this connection.
 func (db *DB) putConn(dc *driverConn, err error) {
+	log.Printf("[%d] putConn\n", time.Now().UnixNano())
 	db.mu.Lock()
 	if !dc.inUse {
 		if debugGetPut {
@@ -1068,6 +1071,7 @@ func (db *DB) putConn(dc *driverConn, err error) {
 // If a connRequest was fulfilled or the *driverConn was placed in the
 // freeConn list, then true is returned, otherwise false is returned.
 func (db *DB) putConnDBLocked(dc *driverConn, err error) bool {
+	log.Printf("[%d] putConnDBLocked()\n", time.Now().UnixNano())
 	if db.closed {
 		return false
 	}
@@ -1090,6 +1094,7 @@ func (db *DB) putConnDBLocked(dc *driverConn, err error) bool {
 		}
 		return true
 	} else if err == nil && !db.closed && db.maxIdleConnsLocked() > len(db.freeConn) {
+		log.Printf("[%d] putConnDBLocked.append(db.freeConn)\n", time.Now().UnixNano())
 		db.freeConn = append(db.freeConn, dc)
 		db.startCleanerLocked()
 		return true
