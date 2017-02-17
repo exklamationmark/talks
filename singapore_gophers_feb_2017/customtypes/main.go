@@ -48,7 +48,7 @@ func main() {
 	toInsert := gdps[0]
 	// Goto: sql.go 1258
 	// Goto: sql.go 1241
-	// Goto: sql.go 1262
+	// Goto: sql.go 1263
 	// We first get a connection (db.conn), then run a query on it
 	// Back to Slide 5
 
